@@ -5,27 +5,35 @@ class User(db.Model):
     User relation object.
 
     Attributes/Columns:
-    - id: SSN of the patient
-    - name: Name of the patient
-    - phone: Phone number of the patient
+    - id: (INT) Primary key ID of the patient
+    - ssn: (STRING) SSN of the patient
+    - name: (STRING) Name of the patient
+    - phone: (STRING) Phone number of the patient
+    - checkin_status: (BOOL) Checkin status of the patient
     '''
 
     id = db.Column(db.Integer, primary_key=True)
+    ssn = db.Column(db.String(12), nullable=True, unique=True)
     name = db.Column(db.String(100))
     phone = db.Column(db.String(15))
+    checkin_status = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        return f"<Patient Object - ssn: {self.ssn}>"
 
 class Doctor(db.Model):
     '''
     Doctor relation object.
 
     Attributes/Columns:
-    - name: Name of the doctor
-    - specialties: Key specialties of the doctor given in csv format
-    - experience: Years of experience
-    - opd_rate: Consulation fee
-    - is_available: Availability status
-    - phone: Phone number of doctor
-    - profile_picture: Path to doctor's profile picture
+    - id: (INT) Primary key ID of the doctor
+    - name: (STRING) Name of the doctor
+    - specialties: (STRING) Key specialties of the doctor given in csv format
+    - experience: (INT) Years of experience
+    - opd_rate: (FLOAT) Consultation fee
+    - is_available: (BOOL) Availability status
+    - phone: (STRING) Phone number of doctor
+    - profile_picture: (STRING) Path to doctor's profile picture
     '''
 
     id = db.Column(db.Integer, primary_key=True)
@@ -40,4 +48,6 @@ class Doctor(db.Model):
     def __repr__(self):
         return f"<Doctor {self.name} - {self.specialties}>"
     
+
+
 
