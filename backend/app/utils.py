@@ -1,6 +1,7 @@
 from typing import Dict, List
 from app.models import User
 import re
+from flask import jsonify
 
 def query_builder(data: Dict[str, str], query_type: str, queried_param: str) -> List[User]:
     """
@@ -56,4 +57,18 @@ def parse_phone_number(phone: str) -> str:
         return cleaned_phone[2:]
     else:
         return None
+    
+def create_error_response(message: str, status_code: int) -> tuple[Dict, int]:
+    """Create standardized error response"""
+    return jsonify({
+        "status": "error",
+        "message": message
+    }), status_code
+
+def create_success_response(message: str, status_code: int) -> tuple[Dict, int]:
+    """Create standardized success response"""
+    return jsonify({
+        "status": "success",
+        "message": message
+    }), status_code
 
