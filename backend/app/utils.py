@@ -62,13 +62,13 @@ def create_error_response(message: str, status_code: int) -> tuple[Dict, int]:
     """Create standardized error response"""
     return jsonify({
         "status": "error",
-        "message": message
+        "response": message
     }), status_code
 
 def create_success_response(message: str, status_code: int) -> tuple[Dict, int]:
     """Create standardized success response"""
     return jsonify({
         "status": "success",
-        "message": message
+        "response": message
     }), status_code
 

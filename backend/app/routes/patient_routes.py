@@ -27,13 +27,13 @@ def authenticate_patient():
 
     TODO: Add 2FA
     """
-    
+
     try:
         data = request.get_json()
+
         if not data or not isinstance(data, dict):
             raise BadRequest("Invalid JSON payload")
-
-        # Validate required fields
+        
         required_fields = ['ssn', 'phone']
         if not all(field in data for field in required_fields):
             raise BadRequest("Missing required fields")
@@ -56,7 +56,6 @@ def authenticate_patient():
         
         user = query[0]
 
-        # Phone validation
         try:
             phone = parse_phone_number(data['phone'])
         except ValueError as e:
@@ -77,7 +76,10 @@ def authenticate_patient():
         )
 
     except BadRequest as e:
-        return create_error_response(str(e), HTTPStatus.BAD_REQUEST)
+        return create_error_response(
+            str(e), 
+            HTTPStatus.BAD_REQUEST
+        )
     except Exception as e:
         return create_error_response(
             "Internal server error",
@@ -112,20 +114,109 @@ def checkin():
     return jsonify({"message": "Authenticated"}), 200
 
 
+@api.route('/doctors', methods=['GET'])
+def fetch_doctors():
+    """
+    Fetch all available doctors from the system.
+
+    Returns:
+        JSON response containing list of doctors with their details:
+        {
+            "status": "success",
+            "data": [
+                {
+                    "id": int,
+                    "name": str,
+                    "specialties": str
+                },
+                ...
+            ]
+        }
+    """
+    try:
+        doctors = Doctor.query.all()
+        
+        if not doctors:
+            return create_error_response(
+                "No doctors available in the system",
+                HTTPStatus.NOT_FOUND
+            )
+        
+        doctors_data = [{
+            "id": doctor.id,
+            "name": doctor.name,
+            "specialties": doctor.specialties
+        } for doctor in doctors]
+        
+        return create_success_response(
+            doctors_data,
+            HTTPStatus.OK
+        )
+
+    except Exception as e:
+        return create_error_response(
+            "Internal server error",
+            HTTPStatus.INTERNAL_SERVER_ERROR
+        )
+
+
 @api.route('/symptoms/match', methods=['POST'])
 def patient_symptom_match():
     """
-    Receiving a a patient's symptoms and matching them with the best doctor.
+    Receiving a a patient's symptoms and matching them with the doctor that best suits their needs.
 
     Expected JSON format:
     {
-        "symptom": str  # Symptoms the patient is facing
+        "symptoms": str  # Symptoms the patient is facing
     }
 
-    # TODO: create symptom to doctor matching algorithm
+    Returns:
+        {
+            "status": "success",
+            "data": {
+                "doctor_id": int,      # Unique identifier of the matched doctor
+                "doctor_name": str,     # Full name of the matched doctor
+                "doctor_specialties": str # Doctor's areas of specialization
+            }
+        }
+
+    TODO: Implement sophisticated symptom-to-doctor matching algorithm based on specialties
     """
     
-    # Brute force implementation - return the first doctor
+    # Brute force implementation - returns the first doctor
+    try:
+        data = request.get_json()
 
-    pass
+        if not data or not isinstance(data, dict):
+            raise BadRequest("Invalid JSON payload")
+
+        required_field = 'symptoms'
+        if not required_field in data:
+            raise BadRequest("Missing required field")
+        
+        # Get the first doctor from the database
+        doctor = Doctor.query.first()
+
+        if not doctor:
+            return create_error_response(
+                "No doctors available in the system",
+                HTTPStatus.NOT_FOUND
+            )
+        
+        return create_success_response({
+            "doctor_id": doctor.id,
+            "doctor_name": doctor.name,
+            "doctor_specialties": doctor.specialties
+        }, HTTPStatus.OK)
+    
+    except BadRequest as e:
+        return create_error_response(
+            str(e), 
+            HTTPStatus.BAD_REQUEST
+        )
+    except Exception as e:
+        return create_error_response(
+            "Internal server error",
+            HTTPStatus.INTERNAL_SERVER_ERROR
+        )
 
