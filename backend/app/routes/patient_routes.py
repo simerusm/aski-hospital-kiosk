@@ -2,11 +2,11 @@ from flask import Blueprint, request, jsonify, current_app
 from app.models import User, Doctor
 from app import db
 from typing import *
-from app.utils import query_builder, parse_phone_number, create_error_response, create_success_response
+from app.utils import query_builder, validate_phone_number, create_error_response, create_success_response, fetch_all_doctors
 from http import HTTPStatus
 from werkzeug.exceptions import BadRequest
 
-api = Blueprint('api', __name__)
+api = Blueprint('patient_api', __name__)
     
 @api.route('/auth', methods=['POST'])
 def authenticate_patient():
@@ -57,7 +57,7 @@ def authenticate_patient():
         user = query[0]
 
         try:
-            phone = parse_phone_number(data['phone'])
+            phone = validate_phone_number(data['phone'])
         except ValueError as e:
             return create_error_response(
                 f"Invalid phone number: {str(e)}",
@@ -97,7 +97,7 @@ def checkin():
 
     query = query_builder(data, "all", "ssn")
 
-    # Error handling to make sure there's only one
+    # Error handling to make sure there's only one user with the ssn
     if len(query) > 1:
         return jsonify({"error": "Multiple users found with the same SSN"}), 409 # Conflict
     elif len(query) == 0:
@@ -133,31 +133,7 @@ def fetch_doctors():
             ]
         }
     """
-    try:
-        doctors = Doctor.query.all()
-        
-        if not doctors:
-            return create_error_response(
-                "No doctors available in the system",
-                HTTPStatus.NOT_FOUND
-            )
-        
-        doctors_data = [{
-            "id": doctor.id,
-            "name": doctor.name,
-            "specialties": doctor.specialties
-        } for doctor in doctors]
-        
-        return create_success_response(
-            doctors_data,
-            HTTPStatus.OK
-        )
-
-    except Exception as e:
-        return create_error_response(
-            "Internal server error",
-            HTTPStatus.INTERNAL_SERVER_ERROR
-        )
+    return fetch_all_doctors()
 
 
 @api.route('/symptoms/match', methods=['POST'])
@@ -171,14 +147,14 @@ def patient_symptom_match():
     }
 
     Returns:
-        {
-            "status": "success",
-            "data": {
-                "doctor_id": int,      # Unique identifier of the matched doctor
-                "doctor_name": str,     # Full name of the matched doctor
-                "doctor_specialties": str # Doctor's areas of specialization
-            }
+    {
+        "status": "success",
+        "data": {
+            "doctor_id": int,      # Unique identifier of the matched doctor
+            "doctor_name": str,     # Full name of the matched doctor
+            "doctor_specialties": str # Doctor's areas of specialization
         }
+    }
 
     TODO: Implement sophisticated symptom-to-doctor matching algorithm based on specialties
     """
@@ -219,4 +195,3 @@ def patient_symptom_match():
             "Internal server error",
             HTTPStatus.INTERNAL_SERVER_ERROR
         )
-

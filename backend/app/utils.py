@@ -1,7 +1,8 @@
 from typing import Dict, List
-from app.models import User
+from app.models import User, Doctor
 import re
 from flask import jsonify
+from http import HTTPStatus
 
 def query_builder(data: Dict[str, str], query_type: str, queried_param: str) -> List[User]:
     """
@@ -58,6 +59,7 @@ def parse_phone_number(phone: str) -> str:
     else:
         return None
     
+
 def create_error_response(message: str, status_code: int) -> tuple[Dict, int]:
     """Create standardized error response"""
     return jsonify({
@@ -65,10 +67,61 @@ def create_error_response(message: str, status_code: int) -> tuple[Dict, int]:
         "response": message
     }), status_code
 
+
 def create_success_response(message: str, status_code: int) -> tuple[Dict, int]:
     """Create standardized success response"""
     return jsonify({
         "status": "success",
         "response": message
     }), status_code
+
+
+def fetch_all_doctors():
+    """
+    Logic to fetch/get all the doctors in the system.
+    """
+    try:
+        doctors = Doctor.query.all()
+        
+        if not doctors:
+            return create_error_response(
+                "No doctors available in the system",
+                HTTPStatus.NOT_FOUND
+            )
+        
+        doctors_data = [{
+            "id": doctor.id,
+            "name": doctor.name,
+            "specialties": doctor.specialties
+        } for doctor in doctors]
+        
+        return create_success_response(
+            doctors_data,
+            HTTPStatus.OK
+        )
+
+    except Exception as e:
+        return create_error_response(
+            "Internal server error",
+            HTTPStatus.INTERNAL_SERVER_ERROR
+        )
+
+
+def validate_phone_number(phone_number: str) -> str:
+    """
+    Validates and parses a phone number.
+
+    Args:
+        phone_number (str): The phone number to validate and parse.
+
+    Returns:
+        str: The parsed phone number.
+
+    Raises:
+        ValueError: If the phone number is invalid or cannot be parsed.
+    """
+    phone = parse_phone_number(phone_number)
+    if phone is None:
+        raise ValueError("Phone number cannot be null")
+    return phone
 
