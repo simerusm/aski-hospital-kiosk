@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from app.models import User, Doctor
+from app.models import User, Doctor, Queue, QueueEntry
 from app import db
 from typing import *
 from app.utils import create_error_response, create_success_response, fetch_all_doctors, validate_phone_number
@@ -19,7 +19,7 @@ def get_users():
                 "status": "success",
                 "data": [
                     {
-                        "ssn": int,
+                        "id": int,
                         "name": str,
                         "phone": str,
                         "checkin_status": bool
@@ -38,7 +38,7 @@ def get_users():
             )
         
         users_data = [{
-            "ssn": user.id,
+            "id": user.id,
             "name": user.name,
             "phone": user.phone,
             "checkin_status": user.checkin_status
@@ -179,3 +179,65 @@ def add_doctor():
             f"Type error: {str(e)}",
             HTTPStatus.BAD_REQUEST
         )
+
+
+@api.route('/view/<int:doctor_id>', methods=['GET'])
+def view_queue(doctor_id: int):
+    """View the current queue for a specific doctor"""
+    try:
+        queue = Queue.query.filter_by(doctor_id=doctor_id).first()
+        if not queue:
+            return create_error_response(
+                "Queue not found for this doctor",
+                HTTPStatus.NOT_FOUND
+            )
+
+        entries = QueueEntry.query.filter_by(
+            queue_id=queue.id,
+            status="waiting"
+        ).order_by(QueueEntry.position).all()
+
+        queue_data = {
+            "total_patients": queue.total_patients,
+            "current_queue": [{
+                "position": entry.position,
+                "patient_id": entry.patient_id,
+                "status": entry.status
+            } for entry in entries]
+        }
+
+        return create_success_response(queue_data, HTTPStatus.OK)
+
+    except Exception as e:
+        return create_error_response(str(e), HTTPStatus.INTERNAL_SERVER_ERROR)
+    
+
+@api.route('/next-status/<int:doctor_id>', methods=['GET'])
+def next_patient_status(doctor_id):
+    """Get the status of the next patient in the queue"""
+    try:
+        queue = Queue.query.filter_by(doctor_id=doctor_id).first()
+        if not queue:
+            return create_error_response(
+                "Queue not found for this doctor",
+                HTTPStatus.NOT_FOUND
+            )
+
+        next_patient = QueueEntry.query.filter_by(
+            queue_id=queue.id,
+            status="waiting"
+        ).order_by(QueueEntry.position).first()
+
+        if not next_patient:
+            return create_error_response(
+                "No patients in queue",
+                HTTPStatus.NOT_FOUND
+            )
+
+        return create_success_response({
+            "next_patient_id": next_patient.patient_id,
+            "position": next_patient.position
+        }, HTTPStatus.OK)
+
+    except Exception as e:
+        return create_error_response(str(e), HTTPStatus.INTERNAL_SERVER_ERROR)
