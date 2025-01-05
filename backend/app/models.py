@@ -100,4 +100,29 @@ class QueueEntry(db.Model):
     def __repr__(self):
         return f"<QueueEntry Patient ID {self.patient_id} in Queue {self.queue_id}>"
 
+class Slot(db.Model):
+    """
+    Slot model for managing doctor's appointment slots.
+
+    Attributes:
+    - id: (INT) Primary key ID of the slot
+    - doctor_id: (INT) Foreign key referencing the doctor
+    - start_time: (DATETIME) Start time of the slot
+    - end_time: (DATETIME) End time of the slot
+    - is_available: (BOOL) Whether the slot is available
+    - patient_id: (INT) Foreign key referencing the patient (null if unbooked)
+    - slot_type: (STRING) Either 'walk_in' or 'appointment'
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctor.id'), nullable=False)
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time = db.Column(db.DateTime, nullable=False)
+    is_available = db.Column(db.Boolean, default=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    slot_type = db.Column(db.String(20), default='appointment')
+
+    # Relationships
+    doctor = db.relationship('Doctor', backref=db.backref('slots', lazy=True))
+    patient = db.relationship('User', backref=db.backref('appointments', lazy=True))
+
 
