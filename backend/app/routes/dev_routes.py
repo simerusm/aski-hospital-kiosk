@@ -1,10 +1,11 @@
 from flask import Blueprint, request, jsonify, current_app
-from app.models import User, Doctor, Queue, QueueEntry
+from app.models import User, Doctor, Queue, QueueEntry, Slot
 from app import db
 from typing import *
 from app.utils import create_error_response, create_success_response, fetch_all_doctors, validate_phone_number
 from http import HTTPStatus
 from werkzeug.exceptions import BadRequest
+from datetime import datetime
 
 api = Blueprint('dev_api', __name__)
 
@@ -241,3 +242,111 @@ def next_patient_status(doctor_id):
 
     except Exception as e:
         return create_error_response(str(e), HTTPStatus.INTERNAL_SERVER_ERROR)
+    
+
+@api.route('/post/slot', methods=['POST'])
+def add_slot():
+    """
+    Endpoint to add a slot to the database.
+
+    Expected JSON format:
+    {
+        "doctor_id": int,
+        "start_time": str,  # ISO format datetime string "YYYY-MM-DDTHH:MM:SS"
+        "end_time": str,    # ISO format datetime string "YYYY-MM-DDTHH:MM:SS"
+        "slot_type": str    # Optional: "appointment" or "walk_in", defaults to "appointment"
+    }
+
+    Returns:
+    {
+        "status": "success",
+        "response": {
+            "slot_id": int,
+            "doctor_id": int,
+            "start_time": str,
+            "end_time": str,
+            "slot_type": str
+        }
+    }
+    """
+
+    try:
+        data = request.get_json()
+
+        if not data or not isinstance(data, dict):
+            raise BadRequest("Invalid JSON payload")
+        
+        required_fields = ['doctor_id', 'start_time', 'end_time']
+        if not all(field in data for field in required_fields):
+            raise BadRequest("Missing required fields")
+
+        # Verify doctor exists
+        doctor = Doctor.query.get_or_404(data['doctor_id'])
+
+        # Parse datetime strings
+        try:
+            start_time = datetime.fromisoformat(data['start_time'])
+            end_time = datetime.fromisoformat(data['end_time'])
+        except ValueError:
+            raise BadRequest("Invalid datetime format. Use ISO format (YYYY-MM-DDTHH:MM:SS)")
+        
+        if end_time <= start_time:
+            raise BadRequest("End time must be after start time")
+        
+        # Create new slot
+        new_slot = Slot(
+            doctor_id=data['doctor_id'],
+            start_time=start_time,
+            end_time=end_time,
+            slot_type=data.get('slot_type', 'appointment')
+        )
+
+        db.session.add(new_slot)
+        db.session.commit()
+
+        return create_success_response({
+            "slot_id": new_slot.id,
+            "doctor_id": new_slot.doctor_id,
+            "start_time": new_slot.start_time.isoformat(),
+            "end_time": new_slot.end_time.isoformat(),
+            "slot_type": new_slot.slot_type
+        }, HTTPStatus.CREATED)
+    
+    except BadRequest as e:
+        return create_error_response(str(e), HTTPStatus.BAD_REQUEST)
+    except Exception as e:
+        return create_error_response(str(e), HTTPStatus.INTERNAL_SERVER_ERROR)
+
+
+@api.route('/get/slots', methods=['GET'])
+def get_slots():
+    """
+    Get all the slots in the database.
+    """
+    try:
+        slots = Slot.query.all()
+
+        if not slots:
+            return create_error_response(
+                "No users available in the system",
+                HTTPStatus.NOT_FOUND
+            )
+        
+        slots_data = [{
+            "slot_id": slot.id,
+            "doctor_id": slot.doctor_id,
+            "start_time": slot.start_time,
+            "end_time": slot.end_time,
+            "slot_type": slot.slot_type
+        } for slot in slots]
+
+        return create_success_response(
+            slots_data,
+            HTTPStatus.OK
+        )
+
+    except BadRequest as e:
+        return create_error_response(
+            str(e),
+            HTTPStatus.BAD_REQUEST
+        )
