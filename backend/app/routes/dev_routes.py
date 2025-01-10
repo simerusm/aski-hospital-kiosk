@@ -41,6 +41,7 @@ def get_users():
         users_data = [{
             "id": user.id,
             "name": user.name,
+            "ssn": user.ssn,
             "phone": user.phone,
             "checkin_status": user.checkin_status
         } for user in users]
