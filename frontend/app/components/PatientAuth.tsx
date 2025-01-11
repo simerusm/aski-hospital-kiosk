@@ -3,7 +3,11 @@
 import { useState } from 'react';
 import { patientService } from '../services/api';
 
-export default function PatientAuth() {
+interface PatientAuthProps {
+  onAuthenticate: () => void; // Prop to handle authentication
+}
+
+export default function PatientAuth({ onAuthenticate }: PatientAuthProps) {
   const [ssn, setSsn] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
@@ -12,22 +16,15 @@ export default function PatientAuth() {
     e.preventDefault();
     try {
       const response = await patientService.authenticate(ssn, phone);
-      console.log('hi');
-      console.log(response.data);
-
       if (response.status === 200) {
         setMessage('Authentication successful!');
+        onAuthenticate(); // Call the handler to update authentication state
       }
-      
-      // TODO: Handle successful authentication (e.g., redirect or store token)
-
     } catch (error: unknown) {
-      // Check if the error has a response property
       if (typeof error === 'object' && error !== null && 'response' in error) {
         const errorResponse = error as { response?: { data?: { message?: string } } };
         setMessage(errorResponse.response?.data?.message || 'Authentication failed');
       } else if (error instanceof Error) {
-        // Handle generic errors
         setMessage(error.message);
       } else {
         setMessage('Authentication failed');
