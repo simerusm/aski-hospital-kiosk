@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { patientService } from '../services/api';
+import { patientService } from '../services/patients/patientsApi';
+import { useRouter } from 'next/navigation';
 
-interface PatientAuthProps {
-  onAuthenticate: () => void; // Prop to handle authentication
-}
-
-export default function PatientAuth({ onAuthenticate }: PatientAuthProps) {
+export default function PatientAuth() {
+  const router = useRouter();
   const [ssn, setSsn] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
@@ -18,7 +16,7 @@ export default function PatientAuth({ onAuthenticate }: PatientAuthProps) {
       const response = await patientService.authenticate(ssn, phone);
       if (response.status === 200) {
         setMessage('Authentication successful!');
-        onAuthenticate(); // Call the handler to update authentication state
+        router.push('/modes'); // Redirect to the modes page after authentication
       }
     } catch (error: unknown) {
       if (typeof error === 'object' && error !== null && 'response' in error) {

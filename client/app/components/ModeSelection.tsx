@@ -1,29 +1,31 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { slotService } from '../services/api';
+import { slotService } from '../services/slots/slotsApi';
 
 export default function ModeSelection() {
   const router = useRouter();
 
-  const handleWalkIn = () => {
+  const handleWalkIn = async () => {
     // Redirect to the queue join endpoint
-    router.push('/api/queue/join');
+    await fetch('/api/queue/join', {
+      method: 'POST',
+      // Include any necessary data here
+    });
+    router.push('/queue'); // Redirect to a queue status page or similar
   };
 
   const handleAppointment = async () => {
-    // Mock API call
+    // Fetch available slots
     try {
-        const response = await slotService.getSlots();
-        if (response.status === 200) {
-            console.log(response.data.response)
-        } 
-    } catch(error) {
-        console.log(error)
+      const response = await slotService.getSlots();
+      if (response.status === 200) {
+        console.log(response.data); // Handle the response data as needed
+        router.push('/slots'); // Redirect to a slots page
+      }
+    } catch (error) {
+      console.error(error);
     }
-    
-    // Redirect to the available slots endpoint
-    router.push('/api/slots/available');
   };
 
   return (
