@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { slotService } from '../services/slots/slotsApi';
+import { slotsService } from '../services/slots/slotsApi';
 
 export default function ModeSelection() {
   const router = useRouter();
@@ -18,7 +18,7 @@ export default function ModeSelection() {
   const handleAppointment = async () => {
     // Fetch available slots
     try {
-      const response = await slotService.getSlots();
+      const response = await slotsService.getSlots();
       if (response.status === 200) {
         console.log(response.data); // Handle the response data as needed
         router.push('/slots'); // Redirect to a slots page

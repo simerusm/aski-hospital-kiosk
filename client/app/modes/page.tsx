@@ -1,6 +1,4 @@
-"use client";
-
-import ModeSelection from '../components/ModeSelection';
+import ModeSelection from './ModeSelection';
 
 export default function ModesPage() {
   return (

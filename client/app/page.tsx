@@ -1,6 +1,4 @@
-"use client"
-
-import PatientAuth from './components/PatientAuth';
+import PatientAuth from './PatientAuth';
 
 export default function Home() {
   return (

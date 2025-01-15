@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { patientService } from '../services/patients/patientsApi';
+import { patientService } from './services/patients/patientsApi';
 import { useRouter } from 'next/navigation';
 
 export default function PatientAuth() {
