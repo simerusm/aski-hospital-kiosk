@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
@@ -9,36 +9,44 @@ import { TimeSlot } from '../types/timeSlot';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Button from '../components/Button';
 import { CalendarEvent } from '../types/calendarEvent';
+import Modal from '../components/Modal';
 
 const localizer = momentLocalizer(moment);
 
-function formatEvents(slots: TimeSlot[]) {
-    return slots.map(slot => ({
-      title: "",
-      start: new Date(slot.start_time),
-      end: new Date(slot.end_time),
-      resource: slot,
-    }));
-  }
+// Define a function to format events for the calendar
+function formatEvents(slots: TimeSlot[]): CalendarEvent[] {
+  return slots.map(slot => ({
+    title: `${moment(slot.start_time).format('h:mm A')} - ${moment(slot.end_time).format('h:mm A')}`,
+    start: new Date(slot.start_time),
+    end: new Date(slot.end_time),
+    resource: slot,
+  }));
+}
 
 export default function AppointmentCalendar() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Function to load events from API
   const loadEvents = useCallback(async () => {
-    const response = await slotsService.getSlots();
-    const slots = response.data.response;
-    
-    const formattedEvents = formatEvents(slots);
-    setEvents(formattedEvents);
+    try {
+      const response = await slotsService.getSlots();
+      const slots: TimeSlot[] = response.data.response;
+
+      const formattedEvents = formatEvents(slots);
+      setEvents(formattedEvents);
+    } catch (error) {
+      console.error('Failed to load slots:', error);
+    }
   }, []);
 
   useEffect(() => {
-    // const start = moment(currentDate).startOf('week').toDate();
-    // const end = moment(currentDate).endOf('week').toDate();
     loadEvents();
   }, [currentDate, loadEvents]);
 
+  // Handle navigation between weeks
   const handleNavigate = (action: 'PREV' | 'NEXT' | 'TODAY') => {
     if (action === 'PREV') {
       setCurrentDate(moment(currentDate).subtract(1, 'week').toDate());
@@ -47,6 +55,12 @@ export default function AppointmentCalendar() {
     } else {
       setCurrentDate(new Date());
     }
+  };
+
+  // Handle clicking an event to open the modal
+  const handleSelectEvent = (event: CalendarEvent) => {
+    setSelectedSlot(event.resource);
+    setIsModalOpen(true);
   };
 
   return (
@@ -70,13 +84,14 @@ export default function AppointmentCalendar() {
           views={['week']}
           date={currentDate}
           onNavigate={(newDate) => setCurrentDate(newDate)}
+          onSelectEvent={handleSelectEvent} // Opens the modal when an event is clicked
           formats={{
             timeGutterFormat: (date, culture, localizer) =>
-              localizer!.format(date, 'HH:mm', culture),
+              localizer!.format(date, 'hh:mm A', culture),
             eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
-              `${localizer!.format(start, 'HH:mm', culture)} - ${localizer!.format(end, 'HH:mm', culture)}`,
+              `${localizer!.format(start, 'hh:mm A', culture)} - ${localizer!.format(end, 'hh:mm A', culture)}`,
             dayFormat: (date, culture, localizer) =>
-                localizer!.format(date, 'ddd DD/MM', culture),
+              localizer!.format(date, 'ddd DD/MM', culture),
           }}
           min={new Date(0, 0, 0, 8, 0, 0)}
           max={new Date(0, 0, 0, 20, 0, 0)}
@@ -91,6 +106,13 @@ export default function AppointmentCalendar() {
           className="bg-white shadow-lg rounded-lg overflow-hidden text-black font-sans"
         />
       </div>
+
+      {/* Modal Component */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        slotDetails={selectedSlot}
+      />
     </div>
   );
 }
