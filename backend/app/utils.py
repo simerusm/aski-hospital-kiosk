@@ -83,12 +83,6 @@ def fetch_all_doctors():
     try:
         doctors = Doctor.query.all()
         
-        if not doctors:
-            return create_error_response(
-                "No doctors available in the system",
-                HTTPStatus.NOT_FOUND
-            )
-        
         doctors_data = [{
             "id": doctor.id,
             "name": doctor.name,

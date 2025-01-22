@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 from app.models import User, Doctor
-from app import db
+from app.database import db
 from typing import *
 from app.utils import query_builder, validate_phone_number, create_error_response, create_success_response, fetch_all_doctors
 from http import HTTPStatus

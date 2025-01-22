@@ -5,3 +5,7 @@ export interface TimeSlot {
   slot_type: string
   start_time: string
 }  
+
+export interface SlotsResponse {
+  response: TimeSlot[];
+}

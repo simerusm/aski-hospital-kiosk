@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.models import User, Doctor, Queue, QueueEntry
-from app import db
+from app.database import db
 from app.utils import create_error_response, create_success_response
 from http import HTTPStatus
 from werkzeug.exceptions import BadRequest
@@ -27,13 +27,15 @@ def join_queue():
         doctor = Doctor.query.get_or_404(data['doctor_id'])
         patient = User.query.get_or_404(data['patient_id'])
 
-        queue = Queue.query.filter_by(doctor_id=doctor.id).first()
+        # Looks to see if we need to instantiate a Queue class for the Doctor
+        queue = db.session.query(Queue).filter_by(doctor_id=doctor.id).first()
         if not queue:
             queue = Queue(doctor_id=doctor.id)
             db.session.add(queue)
             db.session.flush()
 
-        existing_entry = QueueEntry.query.filter_by(
+        # Check to see if the patient is already in the queue
+        existing_entry = db.session.query(QueueEntry).filter_by(
             queue_id=queue.id,
             patient_id=patient.id,
             status="waiting"
@@ -90,14 +92,14 @@ def get_queue_status(doctor_id):
     """
 
     try:
-        queue = Queue.query.filter_by(doctor_id=doctor_id).first()
+        queue = db.session.query(Queue).filter_by(doctor_id=doctor_id).first()
         if not queue:
-            return create_error_response(
-                "Queue not found for this doctor",
-                HTTPStatus.NOT_FOUND
+            return create_success_response(
+                [],
+                HTTPStatus.OK
             )
 
-        entries = QueueEntry.query.filter_by(
+        entries = db.session.query(QueueEntry).filter_by(
             queue_id=queue.id,
             status="waiting"
         ).order_by(QueueEntry.position).all()
@@ -112,7 +114,10 @@ def get_queue_status(doctor_id):
             } for entry in entries]
         }
 
-        return create_success_response(queue_data, HTTPStatus.OK)
+        return create_success_response(
+            queue_data, 
+            HTTPStatus.OK
+        )
 
     except Exception as e:
         return create_error_response(str(e), HTTPStatus.INTERNAL_SERVER_ERROR)
@@ -132,14 +137,14 @@ def process_next_patient(doctor_id):
     """
 
     try:
-        queue = Queue.query.filter_by(doctor_id=doctor_id).first()
+        queue = db.session.query(Queue).filter_by(doctor_id=doctor_id).first()
         if not queue:
             return create_error_response(
                 "Queue not found for this doctor",
                 HTTPStatus.NOT_FOUND
             )
 
-        next_patient = QueueEntry.query.filter_by(
+        next_patient = db.session.query(QueueEntry).filter_by(
             queue_id=queue.id,
             status="waiting"
         ).order_by(QueueEntry.position).first()
@@ -153,7 +158,7 @@ def process_next_patient(doctor_id):
         db.session.delete(next_patient)
         queue.total_patients -= 1
 
-        remaining_patients = QueueEntry.query.filter_by(
+        remaining_patients = db.session.query(QueueEntry).filter_by(
             queue_id=queue.id,
             status="waiting"
         ).all()

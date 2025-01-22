@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 from app.models import User, Doctor, Queue, QueueEntry, Slot
-from app import db
+from app.database import db
 from typing import *
 from app.utils import create_error_response, create_success_response, fetch_all_doctors, validate_phone_number
 from http import HTTPStatus
@@ -31,12 +31,6 @@ def get_users():
     """
     try:
         users = User.query.all()
-        
-        if not users:
-            return create_error_response(
-                "No users available in the system",
-                HTTPStatus.NOT_FOUND
-            )
         
         users_data = [{
             "id": user.id,
@@ -185,13 +179,40 @@ def add_doctor():
 
 @api.route('/view/<int:doctor_id>', methods=['GET'])
 def view_queue(doctor_id: int):
-    """View the current queue for a specific doctor"""
+    """View the current queue for a specific doctor.
+
+    Args:
+        doctor_id (int): The ID of the doctor whose queue is being viewed.
+
+    Returns:
+    On success (HTTP 200):
+    {
+        "status": "success",
+        "response": {
+            "total_patients": int,  # Total number of patients in the queue
+            "current_queue": [       # List of patients currently in the queue
+                {
+                    "position": int,   # Position of the patient in the queue
+                    "patient_id": int, # ID of the patient
+                    "status": str      # Status of the patient (e.g., "waiting")
+                },
+                ...
+            ]
+        }
+    }
+    On error (HTTP 400 or 500):
+    {
+        "status": "error",
+        "response": "Error message describing the issue"
+    }
+    """
     try:
         queue = Queue.query.filter_by(doctor_id=doctor_id).first()
+        
         if not queue:
-            return create_error_response(
-                "Queue not found for this doctor",
-                HTTPStatus.NOT_FOUND
+            return create_success_response(
+                [],
+                HTTPStatus.OK
             )
 
         entries = QueueEntry.query.filter_by(
@@ -327,12 +348,6 @@ def get_slots():
     try:
         slots = Slot.query.all()
 
-        if not slots:
-            return create_error_response(
-                "No users available in the system",
-                HTTPStatus.NOT_FOUND
-            )
-        
         slots_data = [{
             "slot_id": slot.id,
             "doctor_id": slot.doctor_id,

@@ -1,7 +1,7 @@
 from flask import Blueprint, request
 from datetime import datetime, timedelta
 from app.models import Slot, Doctor, User
-from app import db
+from app.database import db
 from app.utils import create_error_response, create_success_response
 from http import HTTPStatus
 
