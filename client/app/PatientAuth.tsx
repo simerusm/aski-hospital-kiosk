@@ -1,14 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { patientService } from './services/patients/patientsApi';
 import { useRouter } from 'next/navigation';
 
 export default function PatientAuth() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [ssn, setSsn] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
+
+  // This is to prevent hydration error related to the initial state of the component
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  if (!mounted) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,7 +26,7 @@ export default function PatientAuth() {
       const response = await patientService.authenticate(ssn, phone);
       if (response.status === 200) {
         setMessage('Authentication successful!');
-        router.push('/modes'); // Redirect to the modes page after authentication
+        router.push('/modes');
       }
     } catch (error: unknown) {
       if (typeof error === 'object' && error !== null && 'response' in error) {
