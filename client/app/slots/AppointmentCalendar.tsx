@@ -13,10 +13,10 @@ import Modal from '../components/Modal';
 
 const localizer = momentLocalizer(moment);
 
-// Define a function to format events for the calendar
+// Function to format events for the calendar
 function formatEvents(slots: TimeSlot[]): CalendarEvent[] {
   return slots.map(slot => ({
-    title: `${moment(slot.start_time).format('h:mm A')} - ${moment(slot.end_time).format('h:mm A')}`,
+    title: "",
     start: new Date(slot.start_time),
     end: new Date(slot.end_time),
     resource: slot,
@@ -64,16 +64,41 @@ export default function AppointmentCalendar() {
   };
 
   return (
-    <div className="flex flex-col h-[600px] w-full max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-4">
-        <Button onClick={() => handleNavigate('PREV')}>
-          <ChevronLeft className="mr-2 h-4 w-4" /> Previous Week
-        </Button>
-        <Button onClick={() => handleNavigate('TODAY')}>Today</Button>
-        <Button onClick={() => handleNavigate('NEXT')}>
-          Next Week <ChevronRight className="ml-2 h-4 w-4" />
-        </Button>
+    <div className="flex flex-col h-[90vh] w-full md:h-[90vh] md:w-[70vw] max-w-7xl mx-auto">
+      <div className="flex flex-col space-y-4 mb-6 p-5">
+        {/* Current month/year display */}
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-white-800">
+            {moment(currentDate).format('MMMM YYYY')}
+          </h2>
+        </div>
+        
+        {/* Navigation controls */}
+        <div className="flex justify-center items-center space-x-4">
+          <Button 
+            onClick={() => handleNavigate('PREV')}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            //variant="ghost"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <Button 
+            onClick={() => handleNavigate('TODAY')}
+            className="px-4 py-2 text-sm font-medium"
+            //variant="outline"
+          >
+            Today
+          </Button>
+          <Button 
+            onClick={() => handleNavigate('NEXT')}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            //variant="ghost"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
+
       <div className="flex-grow">
         <Calendar
           localizer={localizer}
@@ -84,7 +109,7 @@ export default function AppointmentCalendar() {
           views={['week']}
           date={currentDate}
           onNavigate={(newDate) => setCurrentDate(newDate)}
-          onSelectEvent={handleSelectEvent} // Opens the modal when an event is clicked
+          onSelectEvent={handleSelectEvent}
           formats={{
             timeGutterFormat: (date, culture, localizer) =>
               localizer!.format(date, 'hh:mm A', culture),
@@ -96,14 +121,16 @@ export default function AppointmentCalendar() {
           min={new Date(0, 0, 0, 8, 0, 0)}
           max={new Date(0, 0, 0, 20, 0, 0)}
           toolbar={false}
+          className="bg-white shadow-lg rounded-lg overflow-hidden text-black font-sans border border-gray-200"
           components={{
             week: {
               header: ({ date }) => (
-                <span>{moment(date).format('ddd DD/MM')}</span>
+                <span className="font-medium text-gray-700">
+                  {moment(date).format('ddd DD/MM')}
+                </span>
               ),
             },
           }}
-          className="bg-white shadow-lg rounded-lg overflow-hidden text-black font-sans"
         />
       </div>
 
