@@ -1,11 +1,21 @@
-class Prod:
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///prod.db'
-    SQLALCHEMY_TRACK_MODIFICATIONS = True
+from dotenv import load_dotenv
+import os
 
-class Test:
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///dummy.db'  # Use a test database
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+load_dotenv()
 
-class Dev:
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///dev.db'  # Use a development database
+class Config:
+    """Base configuration."""
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+
+class Dev(Config):
+    """Development configuration."""
+    DEVELOPMENT = True
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///dev.db'
+
+class Test(Config):
+    """Test configuration."""
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    JWT_SECRET_KEY = 'test-secret-key'

@@ -1,9 +1,14 @@
+'use client';
+
 import ModeSelection from './ModeSelection';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function ModesPage() {
   return (
-    <div>
-      <ModeSelection />
-    </div>
+    <ProtectedRoute>
+      <div>
+        <ModeSelection />
+      </div>
+    </ProtectedRoute>
   );
 } 

@@ -1,13 +1,15 @@
 from flask import Blueprint, request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.models import Slot, Doctor, User
 from app.database import db
-from app.utils import create_error_response, create_success_response
+from app.utils.utils import create_error_response, create_success_response
 from http import HTTPStatus
+from app.utils.jwt_utils import token_required
 
 api = Blueprint('slot_api', __name__)
 
 @api.route('/available/<int:doctor_id>', methods=['GET'])
+@token_required
 def get_available_slots(doctor_id: int):
     """
     Get all available slots for a doctor for the next 7 days
@@ -21,7 +23,7 @@ def get_available_slots(doctor_id: int):
     """
 
     try:
-        start_date = datetime.now()
+        start_date = datetime.now(timezone.utc)
         end_date = start_date + timedelta(days=7)
 
         available_slots = Slot.query.filter(
@@ -34,6 +36,8 @@ def get_available_slots(doctor_id: int):
             "id": slot.id,
             "start_time": slot.start_time.isoformat(),
             "end_time": slot.end_time.isoformat(),
+            "is_available": slot.is_available,
+            "doctor_id": slot.doctor_id
         } for slot in available_slots]
 
         return create_success_response(
@@ -48,6 +52,7 @@ def get_available_slots(doctor_id: int):
         )
 
 @api.route('/book', methods=['POST'])
+@token_required
 def book_slot():
     """
     Book a specific slot for a patient
@@ -60,6 +65,14 @@ def book_slot():
     """
     try:
         data = request.get_json()
+        
+        # Verify that the authenticated user is booking for themselves
+        if str(data['patient_id']) != str(request.user['user_id']):
+            return create_error_response(
+                "Unauthorized to book for another patient",
+                HTTPStatus.FORBIDDEN
+            )
+            
         slot = Slot.query.get_or_404(data['slot_id'])
         
         if not slot.is_available:

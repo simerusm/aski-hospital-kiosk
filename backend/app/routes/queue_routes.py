@@ -1,13 +1,15 @@
 from flask import Blueprint, request, jsonify
 from app.models import User, Doctor, Queue, QueueEntry
 from app.database import db
-from app.utils import create_error_response, create_success_response
+from app.utils.utils import create_error_response, create_success_response
 from http import HTTPStatus
 from werkzeug.exceptions import BadRequest
+from app.utils.jwt_utils import token_required
 
 api = Blueprint('queue_api', __name__)
 
 @api.route('/join', methods=['POST'])
+@token_required
 def join_queue():
     """
     Add a patient to a specific doctor's queue.
@@ -22,6 +24,13 @@ def join_queue():
         data = request.get_json()
         if not data or not all(k in data for k in ["doctor_id", "patient_id"]):
             raise BadRequest("Missing required fields")
+
+        # Verify that the authenticated user is joining for themselves
+        if str(data['patient_id']) != str(request.user['user_id']):
+            return create_error_response(
+                "Unauthorized to join queue for another patient",
+                HTTPStatus.FORBIDDEN
+            )
 
         # Verify doctor and patient exist
         doctor = Doctor.query.get_or_404(data['doctor_id'])
@@ -66,9 +75,15 @@ def join_queue():
         }, HTTPStatus.CREATED)
 
     except BadRequest as e:
-        return create_error_response(str(e), HTTPStatus.BAD_REQUEST)
+        return create_error_response(
+            str(e), 
+            HTTPStatus.BAD_REQUEST
+        )
     except Exception as e:
-        return create_error_response(str(e), HTTPStatus.INTERNAL_SERVER_ERROR)
+        return create_error_response(
+            str(e), 
+            HTTPStatus.INTERNAL_SERVER_ERROR
+        )
 
 @api.route('/status/<int:doctor_id>', methods=['GET'])
 def get_queue_status(doctor_id):

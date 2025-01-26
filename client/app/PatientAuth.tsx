@@ -3,29 +3,59 @@
 import { useState, useEffect } from 'react';
 import { patientService } from './services/patients/patientsApi';
 import { useRouter } from 'next/navigation';
+import { useAuth } from './context/AuthContext';
 
 export default function PatientAuth() {
   const router = useRouter();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const [mounted, setMounted] = useState(false);
-  const [ssn, setSsn] = useState('');
-  const [phone, setPhone] = useState('');
+  const [formState, setFormState] = useState({
+    ssn: '',
+    phone: '',
+  });
   const [message, setMessage] = useState('');
 
-  // This is to prevent hydration error related to the initial state of the component
   useEffect(() => {
     setMounted(true);
+    // Restore form state from sessionStorage if it exists
+    const savedState = sessionStorage.getItem('authFormState');
+    if (savedState) {
+      setFormState(JSON.parse(savedState));
+    }
   }, []);
-  
-  if (!mounted) {
-    return null;
-  }
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push('/modes');
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  // Save form state to sessionStorage when it changes
+  useEffect(() => {
+    if (mounted) {
+      sessionStorage.setItem('authFormState', JSON.stringify(formState));
+    }
+  }, [formState, mounted]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormState(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await patientService.authenticate(ssn, phone);
+      const response = await patientService.authenticate(formState.ssn, formState.phone);
       if (response.status === 200) {
+        const { token, user } = response.data.response;
+        login(token, user);
         setMessage('Authentication successful!');
+        // Clear form state from sessionStorage after successful login
+        sessionStorage.removeItem('authFormState');
         router.push('/modes');
       }
     } catch (error: unknown) {
@@ -40,6 +70,11 @@ export default function PatientAuth() {
     }
   };
 
+  // Don't render anything while loading or if authenticated
+  if (!mounted || isLoading || isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
       <h2 className="text-2xl text-gray-700 font-bold mb-6">Patient Authentication</h2>
@@ -48,8 +83,9 @@ export default function PatientAuth() {
           <label className="block text-gray-700 mb-2">SSN:</label>
           <input
             type="text"
-            value={ssn}
-            onChange={(e) => setSsn(e.target.value)}
+            name="ssn"
+            value={formState.ssn}
+            onChange={handleInputChange}
             className="w-full text-gray-700 p-2 border rounded"
             required
           />
@@ -58,8 +94,9 @@ export default function PatientAuth() {
           <label className="block text-gray-700 mb-2">Phone:</label>
           <input
             type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            name="phone"
+            value={formState.phone}
+            onChange={handleInputChange}
             className="w-full text-gray-700 p-2 border rounded"
             required
           />

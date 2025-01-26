@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from app.models import User, Doctor, Queue, QueueEntry, Slot
 from app.database import db
 from typing import *
-from app.utils import create_error_response, create_success_response, fetch_all_doctors, validate_phone_number
+from app.utils.utils import create_error_response, create_success_response, fetch_all_doctors, validate_phone_number
 from http import HTTPStatus
 from werkzeug.exceptions import BadRequest
 from datetime import datetime
@@ -208,7 +208,7 @@ def view_queue(doctor_id: int):
     """
     try:
         queue = Queue.query.filter_by(doctor_id=doctor_id).first()
-        
+
         if not queue:
             return create_success_response(
                 [],
