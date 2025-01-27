@@ -1,4 +1,5 @@
 import React from "react";
+import Button from "./Button";
 
 interface ModalProps {
   isOpen: boolean;
@@ -9,9 +10,10 @@ interface ModalProps {
     doctor_id: number;
     slot_type: string;
   } | null;
+  handleDeleteSlot: () => void;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, slotDetails }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, slotDetails, handleDeleteSlot }) => {
   if (!isOpen || !slotDetails) return null;
 
   return (
@@ -23,10 +25,15 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, slotDetails }) => {
         <p><strong>Doctor ID:</strong> {slotDetails.doctor_id}</p>
         <p><strong>Type:</strong> {slotDetails.slot_type}</p>
 
-        <div className="flex justify-end mt-4">
-          <button onClick={onClose} className="px-4 py-2 bg-gray-500 text-white rounded">
-            Close
-          </button>
+        <div className="p-4">
+          <div className="flex justify-end mt-4">
+            <Button onClick={onClose} className="mr-2">
+              Close
+            </Button>
+            <Button onClick={handleDeleteSlot} className="bg-blue-500 text-white">
+              Book Slot
+            </Button>
+          </div>
         </div>
       </div>
     </div>

@@ -97,3 +97,37 @@ def book_slot():
             str(e), 
             HTTPStatus.INTERNAL_SERVER_ERROR
         )
+    
+
+@api.route('/delete/slot/<int:slot_id>', methods=['DELETE'])
+def delete_slot(slot_id):
+    """
+    Delete a slot from the database by its ID.
+
+    Args:
+        slot_id (int): The ID of the slot to be deleted.
+
+    Returns:
+        JSON response indicating success or failure.
+    """
+    try:
+        print(slot_id)
+        # Find the slot by ID
+        slot = Slot.query.filter_by(id=slot_id).first()
+        if not slot:
+            return create_error_response("Slot not found", HTTPStatus.NOT_FOUND)
+
+        # Delete the slot
+        db.session.delete(slot)
+        db.session.commit()
+
+        return create_success_response(
+            "Slot deleted successfully",
+            HTTPStatus.OK
+        )
+
+    except Exception as e:
+        return create_error_response(
+            str(e),
+            HTTPStatus.INTERNAL_SERVER_ERROR
+        )

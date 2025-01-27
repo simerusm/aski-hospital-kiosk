@@ -63,6 +63,19 @@ export default function AppointmentCalendar() {
     setIsModalOpen(true);
   };
 
+  // Function to handle slot deletion
+  const handleDeleteSlot = async () => {
+    if (selectedSlot) {
+      try {
+        await slotsService.deleteSlot(selectedSlot.slot_id);
+        setIsModalOpen(false);
+        loadEvents();
+      } catch (error) {
+        console.error('Failed to delete slot:', error);
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col h-[90vh] w-full md:h-[90vh] md:w-[70vw] max-w-7xl mx-auto">
       <div className="flex flex-col space-y-4 mb-6 p-5">
@@ -78,21 +91,18 @@ export default function AppointmentCalendar() {
           <Button 
             onClick={() => handleNavigate('PREV')}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            //variant="ghost"
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <Button 
             onClick={() => handleNavigate('TODAY')}
             className="px-4 py-2 text-sm font-medium"
-            //variant="outline"
           >
             Today
           </Button>
           <Button 
             onClick={() => handleNavigate('NEXT')}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            //variant="ghost"
           >
             <ChevronRight className="h-5 w-5" />
           </Button>
@@ -139,6 +149,7 @@ export default function AppointmentCalendar() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         slotDetails={selectedSlot}
+        handleDeleteSlot={handleDeleteSlot}
       />
     </div>
   );
