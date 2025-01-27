@@ -303,7 +303,9 @@ def add_slot():
             raise BadRequest("Missing required fields")
 
         # Verify doctor exists
-        doctor = Doctor.query.get_or_404(data['doctor_id'])
+        doctor = Doctor.query.filter_by(id=data['doctor_id']).first()
+        if not doctor:
+            return create_error_response("Doctor not found", HTTPStatus.NOT_FOUND)
 
         # Parse datetime strings
         try:
@@ -337,6 +339,7 @@ def add_slot():
     except BadRequest as e:
         return create_error_response(str(e), HTTPStatus.BAD_REQUEST)
     except Exception as e:
+        print(e)
         return create_error_response(str(e), HTTPStatus.INTERNAL_SERVER_ERROR)
 
 

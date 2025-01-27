@@ -125,4 +125,6 @@ class Slot(db.Model):
     doctor = db.relationship('Doctor', backref=db.backref('slots', lazy=True))
     patient = db.relationship('User', backref=db.backref('appointments', lazy=True))
 
+    def __repr__(self):
+        return f"<Slot for Doctor ID {self.doctor_id}>"
 

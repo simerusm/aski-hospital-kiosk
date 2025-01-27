@@ -37,7 +37,7 @@ export default function ModeSelection() {
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl text-gray-700 font-bold">Select Your Mode</h2>
+        <h2 className="text-2xl text-gray-700 font-bold">Online Kiosk</h2>
         <button
           onClick={handleLogout}
           className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm"

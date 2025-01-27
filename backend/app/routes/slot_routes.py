@@ -73,7 +73,9 @@ def book_slot():
                 HTTPStatus.FORBIDDEN
             )
             
-        slot = Slot.query.get_or_404(data['slot_id'])
+        slot = Slot.query.filter_by(id=data['slot_id']).first()
+        if not slot:
+            return create_error_response("Slot not found", HTTPStatus.NOT_FOUND)
         
         if not slot.is_available:
             return create_error_response(
@@ -95,47 +97,3 @@ def book_slot():
             str(e), 
             HTTPStatus.INTERNAL_SERVER_ERROR
         )
-
-# @api.route('/mode', methods=['POST'])
-# def select_mode():
-#     """
-#     Choose between walk-in queue or scheduled appointment
-    
-#     Expected JSON payload:
-#     {
-#         "mode": str,  # Either "walk_in" or "appointment"
-#         "patient_id": int,
-#         "doctor_id": int
-#     }
-#     """
-#     try:
-#         data = request.get_json()
-#         mode = data['mode']
-        
-#         if mode == "walk_in":
-#             # Use existing queue system
-#             # Redirect to queue/join endpoint
-#             return create_success_response({
-#                 "redirect": f"/api/queue/join",
-#                 "method": "POST",
-#                 "data": {
-#                     "doctor_id": data['doctor_id'],
-#                     "patient_id": data['patient_id']
-#                 }
-#             }, HTTPStatus.OK)
-            
-#         elif mode == "appointment":
-#             # Redirect to slot selection
-#             return create_success_response({
-#                 "redirect": f"/api/slots/available/{data['doctor_id']}",
-#                 "method": "GET"
-#             }, HTTPStatus.OK)
-            
-#         else:
-#             return create_error_response(
-#                 "Invalid mode selected",
-#                 HTTPStatus.BAD_REQUEST
-#             )
-
-#     except Exception as e:
-#         return create_error_response(str(e), HTTPStatus.INTERNAL_SERVER_ERROR)

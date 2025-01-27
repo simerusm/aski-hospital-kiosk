@@ -5,6 +5,7 @@ from flask_jwt_extended import jwt_required
 from flask_api import status
 from backend.models import Doctor, db
 from backend.utils import create_success_response, create_error_response
+from http import HTTPStatus
 
 api = Resource()
 auth = HTTPTokenAuth()
@@ -22,7 +23,9 @@ def update_availability(doctor_id):
     try:
         data = request.get_json()
 
-        doctor = Doctor.query.get_or_404(doctor_id)
+        doctor = Doctor.query.filter_by(id=doctor_id).first()
+        if not doctor:
+            return create_error_response("Doctor not found", HTTPStatus.NOT_FOUND)
         doctor.is_available = data['is_available']
         db.session.commit()
         

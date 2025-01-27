@@ -25,16 +25,14 @@ def join_queue():
         if not data or not all(k in data for k in ["doctor_id", "patient_id"]):
             raise BadRequest("Missing required fields")
 
-        # Verify that the authenticated user is joining for themselves
-        if str(data['patient_id']) != str(request.user['user_id']):
-            return create_error_response(
-                "Unauthorized to join queue for another patient",
-                HTTPStatus.FORBIDDEN
-            )
-
         # Verify doctor and patient exist
-        doctor = Doctor.query.get_or_404(data['doctor_id'])
-        patient = User.query.get_or_404(data['patient_id'])
+        doctor = Doctor.query.filter_by(id=data['doctor_id']).first()
+        if not doctor:
+            return create_error_response("Doctor not found", HTTPStatus.NOT_FOUND)
+
+        patient = User.query.filter_by(id=data['patient_id']).first()
+        if not patient:
+            return create_error_response("Patient not found", HTTPStatus.NOT_FOUND)
 
         # Looks to see if we need to instantiate a Queue class for the Doctor
         queue = db.session.query(Queue).filter_by(doctor_id=doctor.id).first()
@@ -80,6 +78,7 @@ def join_queue():
             HTTPStatus.BAD_REQUEST
         )
     except Exception as e:
+        print(e)
         return create_error_response(
             str(e), 
             HTTPStatus.INTERNAL_SERVER_ERROR

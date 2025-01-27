@@ -73,8 +73,6 @@ def authenticate_patient():
 
         # Generate JWT token
         token = generate_token(user.id, user.ssn)
-
-        print(token)
         
         return create_success_response({
             "message": "Authentication successful",

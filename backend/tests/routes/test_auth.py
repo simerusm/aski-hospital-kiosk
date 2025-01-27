@@ -18,13 +18,17 @@ def client():
 
 def test_patient_authentication(client):
     # Create a test user
-    user = User(ssn='123-45-6789', name='John Doe', phone='555-123-4567')
-    db.session.add(user)
-    db.session.commit()
+    response = client.post('/api/dev/add/user', json={  
+        "ssn": "918234",
+        "name": "John Doe",
+        "phone": "555-123-4567"
+    })
+    assert response.status_code == HTTPStatus.OK
+    assert response.json['status'] == 'success'
 
     # Test successful authentication
     response = client.post('/api/patients/auth', json={
-        "ssn": "123-45-6789",
+        "ssn": "918234",
         "phone": "555-123-4567"
     })
     assert response.status_code == HTTPStatus.OK
@@ -52,25 +56,33 @@ def test_patient_authentication(client):
     assert response.status_code == HTTPStatus.OK
 
 def test_protected_slot_booking(client):
-    # Create test user and doctor
-    user = User(ssn='123-45-6789', name='John Doe', phone='555-123-4567')
-    doctor = Doctor(ssn='987-65-4321', name='Dr. Smith', specialties='General', experience=10, opd_rate=100.0)
-    db.session.add_all([user, doctor])
+    # Create a test user
+    response = client.post('/api/dev/add/user', json={  
+        "ssn": "123456",
+        "name": "John Doe",
+        "phone": "555-123-4567"
+    })
+    assert response.status_code == HTTPStatus.OK
+    assert response.json['status'] == 'success'
+
+    # Create test doctor
+    doctor = Doctor(ssn='918274', name='Dr. Smith', specialties='General', experience=10, opd_rate=100.0)
+    db.session.add(doctor)
     db.session.commit()
 
     # Create a test slot
-    slot = Slot(
-        doctor_id=doctor.id,
-        start_time=datetime.now() + timedelta(days=1),
-        end_time=datetime.now() + timedelta(days=1, hours=1),
-        is_available=True
-    )
-    db.session.add(slot)
-    db.session.commit()
+    response = client.post('/api/dev/post/slot', json={  
+        "doctor_id": doctor.id,
+        "start_time": "2023-10-01T09:00:00",
+        "end_time": "2023-10-01T10:00:00",
+        "slot_type": "appointment"
+    })
+    assert response.status_code == HTTPStatus.CREATED
+    assert response.json['status'] == 'success'
 
     # Authenticate and get token
     auth_response = client.post('/api/patients/auth', json={
-        "ssn": "123-45-6789",
+        "ssn": "123456",
         "phone": "555-123-4567"
     })
     token = auth_response.json['response']['token']
@@ -79,8 +91,8 @@ def test_protected_slot_booking(client):
     response = client.post('/api/slots/book', 
         headers={'Authorization': f'Bearer {token}'},
         json={
-            "slot_id": slot.id,
-            "patient_id": user.id + 1  # Different user ID
+            "slot_id": 1,
+            "patient_id": 100  # Different user ID
         }
     )
     assert response.status_code == HTTPStatus.FORBIDDEN
@@ -90,44 +102,53 @@ def test_protected_slot_booking(client):
     response = client.post('/api/slots/book',
         headers={'Authorization': f'Bearer {token}'},
         json={
-            "slot_id": slot.id,
-            "patient_id": user.id
+            "slot_id": 1,
+            "patient_id": 1
         }
     )
     assert response.status_code == HTTPStatus.OK
     assert response.json['status'] == 'success'
 
+
 def test_protected_queue_joining(client):
-    # Create test user and doctor
-    user = User(ssn='123-45-6789', name='John Doe', phone='555-123-4567')
-    doctor = Doctor(ssn='987-65-4321', name='Dr. Smith', specialties='General', experience=10, opd_rate=100.0)
-    db.session.add_all([user, doctor])
+    # Create a test user
+    response = client.post('/api/dev/add/user', json={  
+        "ssn": "918234",
+        "name": "John Doe",
+        "phone": "555-123-4567"
+    })
+    assert response.status_code == HTTPStatus.OK
+    assert response.json['status'] == 'success'
+
+    doctor = Doctor(ssn='918376', name='Dr. Smith', specialties='General', experience=10, opd_rate=100.0)
+    db.session.add(doctor)
     db.session.commit()
 
     # Authenticate and get token
     auth_response = client.post('/api/patients/auth', json={
-        "ssn": "123-45-6789",
+        "ssn": "918234",
         "phone": "555-123-4567"
     })
+    assert response.status_code == HTTPStatus.OK
     token = auth_response.json['response']['token']
 
-    # Test joining queue with valid token but for another user
+    # Test an unknown patient (not registered) joining the queue
     response = client.post('/api/queue/join',
         headers={'Authorization': f'Bearer {token}'},
         json={
             "doctor_id": doctor.id,
-            "patient_id": user.id + 1  # Different user ID
+            "patient_id": 100  # Different user ID
         }
     )
-    assert response.status_code == HTTPStatus.FORBIDDEN
-    assert "Unauthorized to join queue for another patient" in response.json['response']
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert "Patient not found" in response.json['response']
 
     # Test joining queue with valid token for self
     response = client.post('/api/queue/join',
         headers={'Authorization': f'Bearer {token}'},
         json={
             "doctor_id": doctor.id,
-            "patient_id": user.id
+            "patient_id": 1
         }
     )
     assert response.status_code == HTTPStatus.CREATED

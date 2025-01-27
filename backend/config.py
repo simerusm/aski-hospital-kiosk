@@ -18,4 +18,3 @@ class Test(Config):
     """Test configuration."""
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
-    JWT_SECRET_KEY = 'test-secret-key'

@@ -2,12 +2,16 @@ import jwt
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import request, jsonify
+from dotenv import load_dotenv
 import os
 
-# Get the JWT secret key from environment variable or use a default for development
-JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the JWT secret key from environment variable
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 JWT_ALGORITHM = 'HS256'
-JWT_EXPIRATION_DELTA = timedelta(minutes=1)  # Token expires in 1 minute
+JWT_EXPIRATION_DELTA = timedelta(days=1)  # Token expires in 1 day, TODO add backend validation to check for expired jwt token
 
 def generate_token(user_id: int, ssn: str) -> str:
     """Generate a JWT token for a user."""
