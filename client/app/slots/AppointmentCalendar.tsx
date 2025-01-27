@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Button from '../components/Button';
 import { CalendarEvent } from '../types/calendarEvent';
 import Modal from '../components/Modal';
+import PageWrapper from '../components/PageWrapper';
 
 const localizer = momentLocalizer(moment);
 
@@ -77,80 +78,82 @@ export default function AppointmentCalendar() {
   };
 
   return (
-    <div className="flex flex-col h-[90vh] w-full md:h-[90vh] md:w-[70vw] max-w-7xl mx-auto">
-      <div className="flex flex-col space-y-4 mb-6 p-5">
-        {/* Current month/year display */}
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-white-800">
-            {moment(currentDate).format('MMMM YYYY')}
-          </h2>
+    <PageWrapper>
+      <div className="flex flex-col h-[90vh] w-full md:h-[90vh] md:w-[70vw] max-w-7xl mx-auto text-black">
+        <div className="flex flex-col space-y-4 mb-6 p-5 text-black">
+          {/* Current month/year display */}
+          <div className="text-center text-black">
+            <div className="text-3xl font-bold text-black">
+              {moment(currentDate).format('MMMM YYYY')}
+            </div>
+          </div>
+          
+          {/* Navigation controls */}
+          <div className="flex justify-center items-center space-x-4">
+            <Button 
+              onClick={() => handleNavigate('PREV')}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <ChevronLeft className="h-7 w-7" />
+            </Button>
+            <Button 
+              onClick={() => handleNavigate('TODAY')}
+              className="px-4 py-2 text-xl font-medium"
+            >
+              Today
+            </Button>
+            <Button 
+              onClick={() => handleNavigate('NEXT')}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <ChevronRight className="h-7 w-7" />
+            </Button>
+          </div>
         </div>
-        
-        {/* Navigation controls */}
-        <div className="flex justify-center items-center space-x-4">
-          <Button 
-            onClick={() => handleNavigate('PREV')}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <Button 
-            onClick={() => handleNavigate('TODAY')}
-            className="px-4 py-2 text-sm font-medium"
-          >
-            Today
-          </Button>
-          <Button 
-            onClick={() => handleNavigate('NEXT')}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
 
-      <div className="flex-grow">
-        <Calendar
-          localizer={localizer}
-          events={events}
-          startAccessor="start"
-          endAccessor="end"
-          defaultView={Views.WEEK}
-          views={['week']}
-          date={currentDate}
-          onNavigate={(newDate) => setCurrentDate(newDate)}
-          onSelectEvent={handleSelectEvent}
-          formats={{
-            timeGutterFormat: (date, culture, localizer) =>
-              localizer!.format(date, 'hh:mm A', culture),
-            eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
-              `${localizer!.format(start, 'hh:mm A', culture)} - ${localizer!.format(end, 'hh:mm A', culture)}`,
-            dayFormat: (date, culture, localizer) =>
-              localizer!.format(date, 'ddd DD/MM', culture),
-          }}
-          min={new Date(0, 0, 0, 8, 0, 0)}
-          max={new Date(0, 0, 0, 20, 0, 0)}
-          toolbar={false}
-          className="bg-white shadow-lg rounded-lg overflow-hidden text-black font-sans border border-gray-200"
-          components={{
-            week: {
-              header: ({ date }) => (
-                <span className="font-medium text-gray-700">
-                  {moment(date).format('ddd DD/MM')}
-                </span>
-              ),
-            },
-          }}
+        <div className="flex-grow">
+          <Calendar
+            localizer={localizer}
+            events={events}
+            startAccessor="start"
+            endAccessor="end"
+            defaultView={Views.WEEK}
+            views={['week']}
+            date={currentDate}
+            onNavigate={(newDate) => setCurrentDate(newDate)}
+            onSelectEvent={handleSelectEvent}
+            formats={{
+              timeGutterFormat: (date, culture, localizer) =>
+                localizer!.format(date, 'hh:mm A', culture),
+              eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
+                `${localizer!.format(start, 'hh:mm A', culture)} - ${localizer!.format(end, 'hh:mm A', culture)}`,
+              dayFormat: (date, culture, localizer) =>
+                localizer!.format(date, 'ddd DD/MM', culture),
+            }}
+            min={new Date(0, 0, 0, 8, 0, 0)}
+            max={new Date(0, 0, 0, 20, 0, 0)}
+            toolbar={false}
+            className="bg-white shadow-lg rounded-lg overflow-hidden text-black font-sans border border-gray-200"
+            components={{
+              week: {
+                header: ({ date }) => (
+                  <span className="font-medium text-gray-700">
+                    {moment(date).format('ddd DD/MM')}
+                  </span>
+                ),
+              },
+            }}
+          />
+        </div>
+
+        {/* Modal Component */}
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          slotDetails={selectedSlot}
+          handleDeleteSlot={handleDeleteSlot}
         />
       </div>
-
-      {/* Modal Component */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        slotDetails={selectedSlot}
-        handleDeleteSlot={handleDeleteSlot}
-      />
-    </div>
+    </PageWrapper>
   );
 }

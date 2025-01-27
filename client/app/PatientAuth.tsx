@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { patientService } from './services/patients/patientsApi';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './context/AuthContext';
+import PageWrapper from './components/PageWrapper';
 
 export default function PatientAuth() {
   const router = useRouter();
@@ -76,43 +77,45 @@ export default function PatientAuth() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-2xl text-gray-700 font-bold mb-6">Patient Authentication</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">SSN:</label>
-          <input
-            type="text"
-            name="ssn"
-            value={formState.ssn}
-            onChange={handleInputChange}
-            className="w-full text-gray-700 p-2 border rounded"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Phone:</label>
-          <input
-            type="tel"
-            name="phone"
-            value={formState.phone}
-            onChange={handleInputChange}
-            className="w-full text-gray-700 p-2 border rounded"
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
-        >
-          Authenticate
-        </button>
-      </form>
-      {message && (
-        <p className="mt-4 text-gray-700 text-center text-sm">
-          {message}
-        </p>
-      )}
-    </div>
+    <PageWrapper>
+      <div className="max-w-md mx-auto mt-25 p-9 bg-white rounded-lg shadow-lg">
+        <h2 className="text-2xl text-gray-700 font-bold mb-6">Patient Authentication</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2">SSN:</label>
+            <input
+              type="text"
+              name="ssn"
+              value={formState.ssn}
+              onChange={handleInputChange}
+              className="w-full text-gray-700 p-2 border rounded"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2">Phone:</label>
+            <input
+              type="tel"
+              name="phone"
+              value={formState.phone}
+              onChange={handleInputChange}
+              className="w-full text-gray-700 p-2 border rounded"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+          >
+            Authenticate
+          </button>
+        </form>
+        {message && (
+          <p className="mt-4 text-gray-700 text-center text-sm">
+            {message}
+          </p>
+        )}
+      </div>
+    </PageWrapper>
   );
 }
