@@ -1,3 +1,5 @@
+'use client'  
+
 export interface TimeSlot {
   doctor_id: number
   end_time: string

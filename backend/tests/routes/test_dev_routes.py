@@ -7,13 +7,13 @@ from http import HTTPStatus
 
 @pytest.fixture
 def client():
-    app = create_app('Test')  # Use the create_app function to create the app instance
+    app = create_app('Test')
     app.config['TESTING'] = True
-    with app.app_context():  # Ensure the app context is active
-        db.create_all()  # Create the database tables
+    with app.app_context():
+        db.create_all()
         with app.test_client() as client:
             yield client
-        db.drop_all()  # Clean up after tests
+        db.drop_all()
 
 def test_get_users(client):
     # Test getting users when none exist

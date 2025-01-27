@@ -1,3 +1,5 @@
+'use client'
+
 import PatientAuth from './PatientAuth';
 
 export default function Home() {

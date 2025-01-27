@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from app.models import User, Doctor, Queue, QueueEntry, Slot
 from app.database import db
 from typing import *
-from app.utils import create_error_response, create_success_response, fetch_all_doctors, validate_phone_number
+from app.utils.utils import create_error_response, create_success_response, fetch_all_doctors, validate_phone_number
 from http import HTTPStatus
 from werkzeug.exceptions import BadRequest
 from datetime import datetime
@@ -208,7 +208,7 @@ def view_queue(doctor_id: int):
     """
     try:
         queue = Queue.query.filter_by(doctor_id=doctor_id).first()
-        
+
         if not queue:
             return create_success_response(
                 [],
@@ -303,7 +303,9 @@ def add_slot():
             raise BadRequest("Missing required fields")
 
         # Verify doctor exists
-        doctor = Doctor.query.get_or_404(data['doctor_id'])
+        doctor = Doctor.query.filter_by(id=data['doctor_id']).first()
+        if not doctor:
+            return create_error_response("Doctor not found", HTTPStatus.NOT_FOUND)
 
         # Parse datetime strings
         try:
@@ -337,6 +339,7 @@ def add_slot():
     except BadRequest as e:
         return create_error_response(str(e), HTTPStatus.BAD_REQUEST)
     except Exception as e:
+        print(e)
         return create_error_response(str(e), HTTPStatus.INTERNAL_SERVER_ERROR)
 
 

@@ -2,9 +2,10 @@ from flask import Blueprint, request, jsonify, current_app
 from app.models import User, Doctor
 from app.database import db
 from typing import *
-from app.utils import query_builder, validate_phone_number, create_error_response, create_success_response, fetch_all_doctors
+from app.utils.utils import query_builder, validate_phone_number, create_error_response, create_success_response, fetch_all_doctors
 from http import HTTPStatus
 from werkzeug.exceptions import BadRequest
+from app.utils.jwt_utils import generate_token
 
 api = Blueprint('patient_api', __name__)
     
@@ -19,7 +20,7 @@ def authenticate_patient():
             phone (str): Phone number of the patient for 2FA
 
     Returns:
-        JSON response with authentication status
+        JSON response with authentication status and JWT token
         
     Raises:
         BadRequest: If required fields are missing or invalid
@@ -70,10 +71,19 @@ def authenticate_patient():
                 HTTPStatus.UNAUTHORIZED
             )
 
-        return create_success_response(
-            "Authentication successful",
-            HTTPStatus.OK
-        )
+        # Generate JWT token
+        token = generate_token(user.id, user.ssn)
+        
+        return create_success_response({
+            "message": "Authentication successful",
+            "token": token,
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "ssn": user.ssn,
+                "phone": user.phone
+            }
+        }, HTTPStatus.OK)
 
     except BadRequest as e:
         return create_error_response(

@@ -4,20 +4,30 @@ from app import create_app
 from app.database import db
 from app.models import User, Doctor, Slot, Queue, QueueEntry
 from http import HTTPStatus
+from app.utils.jwt_utils import generate_token
 
 @pytest.fixture
 def client():
-    app = create_app('Test')  # Use the create_app function to create the app instance
+    app = create_app('Test')
     app.config['TESTING'] = True
-    with app.app_context():  # Ensure the app context is active
-        db.create_all()  # Create the database tables
+    with app.app_context():
+        db.create_all()
         with app.test_client() as client:
             yield client
-        db.drop_all()  # Clean up after tests
+        db.drop_all()
 
 def test_view_queue(client):
+    # Create a user first for authentication
+    auth_user = User(ssn='987654', name='Auth User', phone='555-987-6543')
+    db.session.add(auth_user)
+    db.session.commit()
+
+    # Generate JWT token for authentication
+    token = generate_token(auth_user.id, auth_user.ssn)
+    headers = {'Authorization': f'Bearer {token}'}
+
     # Test viewing queue for a doctor when none exists
-    response = client.get('/api/queue/status/10')  
+    response = client.get('/api/queue/status/10', headers=headers)  
     assert response.status_code == HTTPStatus.OK
     assert response.json['status'] == 'success'
 
@@ -30,7 +40,7 @@ def test_view_queue(client):
     db.session.add(queue)
     db.session.commit()
 
-    response = client.get(f'/api/queue/status/{doctor.id}')  
+    response = client.get(f'/api/queue/status/{doctor.id}', headers=headers)  
     assert response.status_code == HTTPStatus.OK
     assert response.json['response']['total_patients'] == 0
 
@@ -40,21 +50,25 @@ def test_view_queue(client):
     db.session.commit()
 
     # Call upon /api/queue routes to join the queue
-    response = client.post('/api/queue/join', json={
-        "doctor_id": doctor.id,
-        "patient_id": user.id
-    })
+    response = client.post('/api/queue/join', 
+        headers=headers,
+        json={
+            "doctor_id": doctor.id,
+            "patient_id": user.id
+        })
     assert response.status_code == HTTPStatus.CREATED
 
     # Check the queue status
-    response = client.get(f'/api/queue/status/{doctor.id}')
+    response = client.get(f'/api/queue/status/{doctor.id}', headers=headers)
     assert response.status_code == HTTPStatus.OK
     assert response.json['response']['total_patients'] == 1
 
     # Ensure duplicates can't be added
-    response = client.post('/api/queue/join', json={
-        "doctor_id": doctor.id,
-        "patient_id": user.id
-    })
+    response = client.post('/api/queue/join', 
+        headers=headers,
+        json={
+            "doctor_id": doctor.id,
+            "patient_id": user.id
+        })
     assert response.status_code == HTTPStatus.CONFLICT
     assert response.json['response'] == "Patient already in queue"

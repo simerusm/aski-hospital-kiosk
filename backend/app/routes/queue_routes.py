@@ -1,13 +1,15 @@
 from flask import Blueprint, request, jsonify
 from app.models import User, Doctor, Queue, QueueEntry
 from app.database import db
-from app.utils import create_error_response, create_success_response
+from app.utils.utils import create_error_response, create_success_response
 from http import HTTPStatus
 from werkzeug.exceptions import BadRequest
+from app.utils.jwt_utils import token_required
 
 api = Blueprint('queue_api', __name__)
 
 @api.route('/join', methods=['POST'])
+@token_required
 def join_queue():
     """
     Add a patient to a specific doctor's queue.
@@ -24,8 +26,13 @@ def join_queue():
             raise BadRequest("Missing required fields")
 
         # Verify doctor and patient exist
-        doctor = Doctor.query.get_or_404(data['doctor_id'])
-        patient = User.query.get_or_404(data['patient_id'])
+        doctor = Doctor.query.filter_by(id=data['doctor_id']).first()
+        if not doctor:
+            return create_error_response("Doctor not found", HTTPStatus.NOT_FOUND)
+
+        patient = User.query.filter_by(id=data['patient_id']).first()
+        if not patient:
+            return create_error_response("Patient not found", HTTPStatus.NOT_FOUND)
 
         # Looks to see if we need to instantiate a Queue class for the Doctor
         queue = db.session.query(Queue).filter_by(doctor_id=doctor.id).first()
@@ -66,9 +73,16 @@ def join_queue():
         }, HTTPStatus.CREATED)
 
     except BadRequest as e:
-        return create_error_response(str(e), HTTPStatus.BAD_REQUEST)
+        return create_error_response(
+            str(e), 
+            HTTPStatus.BAD_REQUEST
+        )
     except Exception as e:
-        return create_error_response(str(e), HTTPStatus.INTERNAL_SERVER_ERROR)
+        print(e)
+        return create_error_response(
+            str(e), 
+            HTTPStatus.INTERNAL_SERVER_ERROR
+        )
 
 @api.route('/status/<int:doctor_id>', methods=['GET'])
 def get_queue_status(doctor_id):

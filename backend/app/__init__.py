@@ -18,7 +18,7 @@ def create_app(config_name: str = None):
             print('dev')
             _app_instance.config.from_object('config.Dev')
 
-        # Blueprint app registrations
+        # Blueprint route registrations
         _app_instance.register_blueprint(patient_routes.api, url_prefix='/api/patients')
         _app_instance.register_blueprint(slot_routes.api, url_prefix='/api/slots')
         _app_instance.register_blueprint(dev_routes.api, url_prefix='/api/dev')

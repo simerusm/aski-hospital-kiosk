@@ -1,4 +1,4 @@
-'use client' // interface used in client-side component, use client needed
+'use client'
 
 import { TimeSlot } from './timeSlot';
 
