@@ -10,10 +10,10 @@ interface ModalProps {
     doctor_id: number;
     slot_type: string;
   } | null;
-  handleDeleteSlot: () => void;
+  handleBooking: () => void;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, slotDetails, handleDeleteSlot }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, slotDetails, handleBooking }) => {
   if (!isOpen || !slotDetails) return null;
 
   return (
@@ -30,7 +30,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, slotDetails, handleDelet
             <Button onClick={onClose} className="mr-2">
               Close
             </Button>
-            <Button onClick={handleDeleteSlot} className="bg-blue-500 text-white">
+            <Button onClick={handleBooking} className="bg-blue-500 text-white">
               Book Slot
             </Button>
           </div>

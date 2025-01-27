@@ -11,6 +11,7 @@ import Button from '../components/Button';
 import { CalendarEvent } from '../types/calendarEvent';
 import Modal from '../components/Modal';
 import PageWrapper from '../components/PageWrapper';
+import { useRouter } from 'next/navigation';
 
 const localizer = momentLocalizer(moment);
 
@@ -29,6 +30,7 @@ export default function AppointmentCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
 
   // Function to load events from API
   const loadEvents = useCallback(async () => {
@@ -64,16 +66,27 @@ export default function AppointmentCalendar() {
     setIsModalOpen(true);
   };
 
-  // Function to handle slot deletion
-  const handleDeleteSlot = async () => {
+  // Function to handle slot booking
+  const handleBooking = async () => {
     if (selectedSlot) {
       try {
         await slotsService.deleteSlot(selectedSlot.slot_id);
         setIsModalOpen(false);
         loadEvents();
+          
+        sendToConfirmation(selectedSlot)
       } catch (error) {
         console.error('Failed to delete slot:', error);
       }
+    }
+  };
+
+  const sendToConfirmation = async (slotDetails: TimeSlot) => {
+    try {      
+      // Navigate to /confirmation and pass data as query parameters
+      router.push(`/confirmation?start_time=${encodeURIComponent(slotDetails.start_time)}&end_time=${encodeURIComponent(slotDetails.end_time)}&doctor_id=${slotDetails.doctor_id}&slot_type=${slotDetails.slot_type}`);
+    } catch (error) {
+      console.error("Failed to delete slot:", error);
     }
   };
 
@@ -151,7 +164,7 @@ export default function AppointmentCalendar() {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           slotDetails={selectedSlot}
-          handleDeleteSlot={handleDeleteSlot}
+          handleBooking={handleBooking}
         />
       </div>
     </PageWrapper>
